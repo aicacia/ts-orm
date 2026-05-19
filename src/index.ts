@@ -55,4 +55,4 @@ export type {
 export { createSingleton, Singleton } from "./singleton/Singleton.js";
 
 // Core types
-export type { AdapterStatus, Constructor, UnsubscribeFn } from "./types.js";
+export type { AdapterStatus, UnsubscribeFn } from "./types.js";

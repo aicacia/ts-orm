@@ -1,4 +1,4 @@
-import type { AdapterStatus, Constructor, UnsubscribeFn } from "../types.js";
+import type { AdapterStatus, UnsubscribeFn } from "../types.js";
 
 export interface SingletonAdapter<T> {
 	subscribe(
@@ -10,10 +10,8 @@ export interface SingletonAdapter<T> {
 	getStatus(): AdapterStatus;
 }
 
-export interface SingletonConfig<T, O extends {} = object> {
-	sourceType: Constructor<SingletonAdapter<T>, [O]>;
-	sourceOptions?: O;
-	defaultValue?: T;
+export interface SingletonConfig<T> {
+	createSource: () => SingletonAdapter<T>;
 }
 
 export interface SingletonInterface<T> {
@@ -27,15 +25,11 @@ export interface SingletonInterface<T> {
 	getSource(): SingletonAdapter<T>;
 }
 
-export class Singleton<T, O extends {} = object>
-	implements SingletonInterface<T>
-{
+export class Singleton<T> implements SingletonInterface<T> {
 	readonly #source: SingletonAdapter<T>;
 
-	constructor(readonly config: SingletonConfig<T, O>) {
-		const sourceOptions =
-			config.sourceOptions === undefined ? ({} as O) : config.sourceOptions;
-		this.#source = new config.sourceType(sourceOptions);
+	constructor({ createSource }: SingletonConfig<T>) {
+		this.#source = createSource();
 	}
 
 	subscribe(
@@ -62,8 +56,8 @@ export class Singleton<T, O extends {} = object>
 	}
 }
 
-export function createSingleton<T, O extends {} = object>(
-	config: SingletonConfig<T, O>,
+export function createSingleton<T>(
+	config: SingletonConfig<T>,
 ): SingletonInterface<T> {
 	return new Singleton(config);
 }

@@ -14,6 +14,10 @@ export type Comment = v.InferOutput<typeof commentSchema>;
 
 export const commentsCollection = createCollection({
 	id: "comments",
-	sourceType: MemoryCollectionAdapter,
+	createSource: (keyOf) =>
+		new MemoryCollectionAdapter<Comment>({
+			keyOf,
+			initialDocs: [],
+		}),
 	keyOf: (doc: Comment) => doc.id,
 });

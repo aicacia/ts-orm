@@ -32,6 +32,10 @@ export type Recipe = v.InferOutput<typeof recipeSchema>;
 
 export const recipesCollection = createCollection({
 	id: "recipes",
-	sourceType: MemoryCollectionAdapter,
+	createSource: (keyOf) =>
+		new MemoryCollectionAdapter<Recipe>({
+			keyOf,
+			initialDocs: [],
+		}),
 	keyOf: (doc: Recipe) => doc.id,
 });

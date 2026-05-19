@@ -2,7 +2,7 @@ import type { CTE } from "../query/cte.js";
 import { createCTE } from "../query/cte.js";
 import type { QueryBuilderInterface } from "../query/QueryBuilder.js";
 import { QueryBuilder } from "../query/QueryBuilder.js";
-import type { AdapterStatus, Constructor, UnsubscribeFn } from "../types.js";
+import type { AdapterStatus, UnsubscribeFn } from "../types.js";
 
 export interface CollectionAdapter<T> {
 	subscribe(
@@ -20,16 +20,9 @@ export interface CollectionAdapterOptions<T> {
 	keyOf: (doc: T) => string;
 }
 
-export interface CollectionConfig<
-	T,
-	O extends Omit<CollectionAdapterOptions<T>, "keyOf"> = Omit<
-		CollectionAdapterOptions<T>,
-		"keyOf"
-	>,
-> {
+export interface CollectionConfig<T> {
 	id: string;
-	sourceType: Constructor<CollectionAdapter<T>, [O]>;
-	sourceOptions?: O;
+	createSource: (keyOf: (doc: T) => string) => CollectionAdapter<T>;
 	keyOf: (doc: T) => string;
 }
 
@@ -49,24 +42,15 @@ export interface CollectionInterface<T> {
 	getSource(): CollectionAdapter<T>;
 }
 
-export class Collection<
-	T,
-	O extends CollectionAdapterOptions<T> = CollectionAdapterOptions<T>,
-> implements CollectionInterface<T>
-{
+export class Collection<T> implements CollectionInterface<T> {
 	readonly #id: string;
 	readonly #source: CollectionAdapter<T>;
 	readonly #keyOf: (doc: T) => string;
 
-	constructor(readonly config: CollectionConfig<T, O>) {
-		const sourceOptions =
-			config.sourceOptions === undefined
-				? ({ keyOf: config.keyOf } as O)
-				: config.sourceOptions;
-
-		this.#id = config.id;
-		this.#keyOf = config.keyOf;
-		this.#source = new config.sourceType(sourceOptions);
+	constructor({ id, createSource, keyOf }: CollectionConfig<T>) {
+		this.#id = id;
+		this.#keyOf = keyOf;
+		this.#source = createSource(keyOf);
 	}
 
 	get id() {
@@ -109,9 +93,8 @@ export class Collection<
 	}
 }
 
-export function createCollection<
-	T,
-	O extends CollectionAdapterOptions<T> = CollectionAdapterOptions<T>,
->(config: CollectionConfig<T, O>): CollectionInterface<T> {
+export function createCollection<T>(
+	config: CollectionConfig<T>,
+): CollectionInterface<T> {
 	return new Collection(config);
 }

@@ -9,7 +9,8 @@ export const userSettingsSchema = v.object({
 export type UserSettings = v.InferOutput<typeof userSettingsSchema>;
 
 export const userSettingsSingleton = createSingleton({
-	sourceType: MemorySingletonAdapter,
-	sourceOptions: { initialValue: { theme: "light", unit: "metric" } },
-	defaultValue: { theme: "light", unit: "metric" },
+	createSource: () =>
+		new MemorySingletonAdapter<UserSettings>({
+			initialValue: { theme: "light", unit: "metric" },
+		}),
 });

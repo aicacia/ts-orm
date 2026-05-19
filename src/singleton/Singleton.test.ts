@@ -4,8 +4,8 @@ import { createSingleton } from "./Singleton.js";
 
 test("Singleton: delegates subscribe/set/update through MemorySingletonAdapter", async (t) => {
 	const singleton = createSingleton({
-		sourceType: MemorySingletonAdapter,
-		sourceOptions: { initialValue: { count: 1 } },
+		createSource: () =>
+			new MemorySingletonAdapter({ initialValue: { count: 1 } }),
 	});
 
 	const values: Array<{ count: number } | undefined> = [];
