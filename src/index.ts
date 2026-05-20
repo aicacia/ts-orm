@@ -46,6 +46,12 @@ export type {
 } from "./query/executor.js";
 // Query/CTE
 export type { QueryBuilderInterface } from "./query/QueryBuilder.js";
+export type {
+	CTESQLBuildOptions,
+	CTESQLResult,
+	SQLDialect,
+} from "./query/sql.js";
+export { cteToSQL } from "./query/sql.js";
 // Singleton
 export type {
 	SingletonAdapter,

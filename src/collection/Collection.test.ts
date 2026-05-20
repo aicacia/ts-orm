@@ -1,5 +1,6 @@
 import test from "tape";
 import { MemoryCollectionAdapter } from "../adapters/MemoryCollectionAdapter.js";
+import { createCTE } from "../query/cte.js";
 import { createCollection } from "./Collection.js";
 
 test("Collection: delegates create/update/delete/subscribe/getStatus/getSource/getKeyOf through MemoryCollectionAdapter", async (t) => {
@@ -16,6 +17,7 @@ test("Collection: delegates create/update/delete/subscribe/getStatus/getSource/g
 	const updates: Array<Array<{ id: string; name: string }>> = [];
 
 	collection.subscribe(
+		createCTE(),
 		(docs) => updates.push(docs),
 		(error) => t.fail(error.message),
 	);

@@ -1,14 +1,13 @@
 import type { CTE } from "../query/cte.js";
-import { createCTE } from "../query/cte.js";
 import type { QueryBuilderInterface } from "../query/QueryBuilder.js";
 import { QueryBuilder } from "../query/QueryBuilder.js";
 import type { AdapterStatus, UnsubscribeFn } from "../types.js";
 
 export interface CollectionAdapter<T> {
 	subscribe(
+		query: CTE<T>,
 		onUpdate: (docs: T[]) => void,
 		onError: (error: Error) => void,
-		query: CTE<T>,
 	): UnsubscribeFn;
 	create(doc: T): Promise<void>;
 	update(id: string, changes: Partial<T>): Promise<void>;
@@ -34,6 +33,7 @@ export interface CollectionInterface<T> {
 	delete(id: string): Promise<void>;
 	query(): QueryBuilderInterface<T>;
 	subscribe(
+		query: CTE<T>,
 		onUpdate: (docs: T[]) => void,
 		onError?: (error: Error) => void,
 	): UnsubscribeFn;
@@ -74,10 +74,11 @@ export class Collection<T> implements CollectionInterface<T> {
 	}
 
 	subscribe(
+		query: CTE<T>,
 		onUpdate: (docs: T[]) => void,
 		onError: (error: Error) => void = () => {},
 	): UnsubscribeFn {
-		return this.#source.subscribe(onUpdate, onError, createCTE());
+		return this.#source.subscribe(query, onUpdate, onError);
 	}
 
 	getStatus(): AdapterStatus {

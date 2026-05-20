@@ -208,6 +208,7 @@ export class QueryBuilder<T> implements QueryBuilderInterface<T> {
 			if (this._adapter) {
 				let execUnsub: UnsubscribeFn | null = null;
 				const adapterUnsub = this._adapter.subscribe(
+					cte,
 					(docs: T[]) => {
 						try {
 							if (execUnsub) execUnsub();
@@ -224,7 +225,6 @@ export class QueryBuilder<T> implements QueryBuilderInterface<T> {
 						}
 					},
 					onError ?? (() => {}),
-					cte,
 				);
 				return () => {
 					adapterUnsub();

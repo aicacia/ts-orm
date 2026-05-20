@@ -2,6 +2,7 @@ import type {
 	CollectionAdapter,
 	CollectionAdapterOptions,
 } from "../collection/Collection.js";
+import { applyCTEToDocuments } from "../query/CTEEvaluator.js";
 import type { CTE } from "../query/cte.js";
 import type { AdapterStatus, UnsubscribeFn } from "../types.js";
 
@@ -14,6 +15,7 @@ export class MemoryCollectionAdapter<T> implements CollectionAdapter<T> {
 	#docs: T[];
 	#status: AdapterStatus = { state: "idle" };
 	#subscribers = new Set<{
+		query: CTE<T>;
 		onUpdate: (docs: T[]) => void;
 		onError: (error: Error) => void;
 	}>();
@@ -27,15 +29,15 @@ export class MemoryCollectionAdapter<T> implements CollectionAdapter<T> {
 	}
 
 	subscribe(
+		query: CTE<T>,
 		onUpdate: (docs: T[]) => void,
 		onError: (error: Error) => void,
-		_query: CTE<T>,
 	): UnsubscribeFn {
-		const subscriber = { onUpdate, onError };
+		const subscriber = { query, onUpdate, onError };
 		this.#subscribers.add(subscriber);
 
 		try {
-			onUpdate(this.#docs.slice());
+			onUpdate(applyCTEToDocuments(this.#docs, query));
 		} catch (error) {
 			onError(error instanceof Error ? error : new Error(String(error)));
 		}
@@ -77,9 +79,9 @@ export class MemoryCollectionAdapter<T> implements CollectionAdapter<T> {
 	}
 
 	#notifySubscribers(): void {
-		for (const { onUpdate, onError } of this.#subscribers) {
+		for (const { query, onUpdate, onError } of this.#subscribers) {
 			try {
-				onUpdate(this.#docs.slice());
+				onUpdate(applyCTEToDocuments(this.#docs, query));
 			} catch (error) {
 				onError(error instanceof Error ? error : new Error(String(error)));
 			}
