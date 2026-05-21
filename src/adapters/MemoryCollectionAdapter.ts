@@ -1,6 +1,7 @@
 import type {
 	CollectionAdapter,
 	CollectionAdapterOptions,
+	CollectionInterface,
 } from "../collection/Collection.js";
 import { applyCTEToDocuments } from "../query/CTEEvaluator.js";
 import type { CTE } from "../query/cte.js";
@@ -19,13 +20,11 @@ export class MemoryCollectionAdapter<T> implements CollectionAdapter<T> {
 		onUpdate: (docs: T[]) => void;
 		onError: (error: Error) => void;
 	}>();
-	#keyOf: (doc: T) => string;
+	#collection: CollectionInterface<T>;
 
-	constructor(
-		options: MemoryCollectionAdapterOptions<T> = {} as MemoryCollectionAdapterOptions<T>,
-	) {
-		this.#keyOf = options.keyOf;
-		this.#docs = options.initialDocs ?? [];
+	constructor({ collection, initialDocs }: MemoryCollectionAdapterOptions<T>) {
+		this.#collection = collection;
+		this.#docs = initialDocs ?? [];
 	}
 
 	subscribe(
@@ -53,7 +52,9 @@ export class MemoryCollectionAdapter<T> implements CollectionAdapter<T> {
 	}
 
 	async update(id: string, changes: Partial<T>): Promise<void> {
-		const index = this.#docs.findIndex((doc) => this.#keyOf(doc) === id);
+		const index = this.#docs.findIndex(
+			(doc) => this.#collection.getKey(doc) === id,
+		);
 
 		if (index === -1) {
 			throw new Error("Unable to update document without a current value");
@@ -64,7 +65,9 @@ export class MemoryCollectionAdapter<T> implements CollectionAdapter<T> {
 	}
 
 	async delete(id: string): Promise<void> {
-		const index = this.#docs.findIndex((doc) => this.#keyOf(doc) === id);
+		const index = this.#docs.findIndex(
+			(doc) => this.#collection.getKey(doc) === id,
+		);
 
 		if (index === -1) {
 			throw new Error("Unable to delete document without a current value");

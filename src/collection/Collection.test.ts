@@ -3,15 +3,16 @@ import { MemoryCollectionAdapter } from "../adapters/MemoryCollectionAdapter.js"
 import { createCTE } from "../query/cte.js";
 import { createCollection } from "./Collection.js";
 
-test("Collection: delegates create/update/delete/subscribe/getStatus/getSource/getKeyOf through MemoryCollectionAdapter", async (t) => {
+test("Collection: delegates create/update/delete/subscribe/getStatus/getSource/getKey/getPrimaryKey through MemoryCollectionAdapter", async (t) => {
 	const collection = createCollection<{ id: string; name: string }>({
 		id: "test",
-		createSource: (keyOf) =>
+		createSource: (collection) =>
 			new MemoryCollectionAdapter({
-				keyOf,
+				collection,
 				initialDocs: [{ id: "1", name: "first" }],
 			}),
-		keyOf: (doc) => doc.id,
+		getPrimaryKey: () => "id",
+		getKey: (doc) => doc.id,
 	});
 
 	const updates: Array<Array<{ id: string; name: string }>> = [];
@@ -44,22 +45,26 @@ test("Collection: delegates create/update/delete/subscribe/getStatus/getSource/g
 
 	t.equal(collection.getSource(), collection.getSource());
 	t.equal(collection.getStatus().state, "idle");
-	t.equal(collection.getKeyOf()({ id: "x", name: "x" }), "x");
+	t.equal(collection.getPrimaryKey(), "id");
+	t.equal(collection.getKey({ id: "x", name: "x" }), "x");
 	t.end();
 });
 
 test("Collection.query: builds a QueryBuilder from adapter docs", (t) => {
-	const collection = createCollection<{ id: string; name: string }>({
+	type User = { id: string; name: string };
+
+	const collection = createCollection<User>({
 		id: "test-query",
-		createSource: (keyOf) =>
+		createSource: (collection) =>
 			new MemoryCollectionAdapter({
-				keyOf,
+				collection,
 				initialDocs: [{ id: "1", name: "first" }],
 			}),
-		keyOf: (doc) => doc.id,
+		getPrimaryKey: () => "id",
+		getKey: (doc) => doc.id,
 	});
 
-	const updates: Array<Array<{ id: string; name: string }>> = [];
+	const updates: Array<Array<User>> = [];
 
 	collection.query().subscribe(
 		(docs) => updates.push(docs),

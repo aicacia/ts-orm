@@ -16,13 +16,25 @@ export interface CollectionAdapter<T> {
 }
 
 export interface CollectionAdapterOptions<T> {
-	keyOf: (doc: T) => string;
+	collection: CollectionInterface<T>;
 }
 
 export interface CollectionConfig<T> {
 	id: string;
-	createSource: (keyOf: (doc: T) => string) => CollectionAdapter<T>;
-	keyOf: (doc: T) => string;
+	getPrimaryKey?: () => string;
+	getKey?: (doc: T) => string;
+	createSource: (collection: CollectionInterface<T>) => CollectionAdapter<T>;
+}
+
+export function defaultGetPrimaryKey(): string {
+	return "id";
+}
+
+export function defaultGetKey(doc: Record<string, unknown>): string {
+	if (typeof doc.id === "string") {
+		return doc.id;
+	}
+	throw new Error("Document is missing a string 'id' field");
 }
 
 export interface CollectionInterface<T> {
@@ -38,19 +50,27 @@ export interface CollectionInterface<T> {
 		onError?: (error: Error) => void,
 	): UnsubscribeFn;
 	getStatus(): AdapterStatus;
-	getKeyOf(): (doc: T) => string;
+	getPrimaryKey(): string;
+	getKey(doc: T): string;
 	getSource(): CollectionAdapter<T>;
 }
 
 export class Collection<T> implements CollectionInterface<T> {
 	readonly #id: string;
 	readonly #source: CollectionAdapter<T>;
-	readonly #keyOf: (doc: T) => string;
+	readonly #getPrimaryKey: () => string;
+	readonly #getKey: (doc: T) => string;
 
-	constructor({ id, createSource, keyOf }: CollectionConfig<T>) {
+	constructor({
+		id,
+		getPrimaryKey = defaultGetPrimaryKey,
+		getKey = defaultGetKey as (doc: T) => string,
+		createSource,
+	}: CollectionConfig<T>) {
 		this.#id = id;
-		this.#keyOf = keyOf;
-		this.#source = createSource(keyOf);
+		this.#getPrimaryKey = getPrimaryKey;
+		this.#getKey = getKey;
+		this.#source = createSource(this);
 	}
 
 	get id() {
@@ -85,8 +105,12 @@ export class Collection<T> implements CollectionInterface<T> {
 		return this.#source.getStatus();
 	}
 
-	getKeyOf(): (doc: T) => string {
-		return this.#keyOf;
+	getPrimaryKey(): string {
+		return this.#getPrimaryKey();
+	}
+
+	getKey(doc: T): string {
+		return this.#getKey(doc);
 	}
 
 	getSource(): CollectionAdapter<T> {
