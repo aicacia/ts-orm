@@ -90,7 +90,7 @@ export class Collection<T> implements CollectionInterface<T> {
 	}
 
 	query(): QueryBuilderInterface<T> {
-		return new QueryBuilder({ adapter: this.#source });
+		return new QueryBuilder({ name: this.id, adapter: this.#source });
 	}
 
 	subscribe(

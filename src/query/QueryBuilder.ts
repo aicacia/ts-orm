@@ -68,6 +68,7 @@ export interface QueryBuilderInterface<T> {
 }
 
 export interface QueryBuilderOptions<T> {
+	name?: string;
 	source?: T[];
 	executor?: QueryExecutor<T>;
 	adapter?: CollectionAdapter<T>;
@@ -90,6 +91,7 @@ export class QueryBuilder<T> implements QueryBuilderInterface<T> {
 			this._source = sourceOrOptions.source ?? [];
 			this._executor = sourceOrOptions.executor ?? new D2Executor<T>();
 			this._adapter = sourceOrOptions.adapter;
+			this._cte.name = sourceOrOptions.name;
 		}
 	}
 
